@@ -135,7 +135,7 @@ if st.button("💌 Submit Weekly Check-in", type="primary", use_container_width=
 
     distress_anxiety = (anxiety - 1) / 4.0 * 7.0
     distress_sleep = (5 - sleep) / 4.0 * 6.5
-    distress_hope = (hope - 1) / 4.0 * 6.5
+    distress_hope = (5-hope) / 4.0 * 6.5
     distress_mood = (5 - mood) / 4.0 * 7.0
 
     raw_struct = distress_anxiety + distress_sleep + distress_hope + distress_mood
@@ -191,6 +191,14 @@ if st.button("💌 Submit Weekly Check-in", type="primary", use_container_width=
     </div>
     """, unsafe_allow_html=True)
 
+
+    st.markdown("#### 🔍 Structured Score Breakdown")
+    st.markdown(f"""
+    - **Anxiety contribution:** ({anxiety} - 1) / 4 * 7.0 = **{distress_anxiety:.1f} points**
+    - **Sleep contribution:** (5 - {sleep}) / 4 * 6.5 = **{distress_sleep:.1f} points**
+    - **Hope contribution:** (5 - {hope}) / 4 * 6.5 = **{distress_hope:.1f} points**
+    - **Mood contribution:** (5 - {mood}) / 4 * 7.0 = **{distress_mood:.1f} points**
+    """)
 
     st.markdown("#### 📊 This Week's Submission Summary")
     col1, col2, col3 = st.columns(3)
