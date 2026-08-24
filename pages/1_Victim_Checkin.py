@@ -76,7 +76,7 @@ selected_case_id = st.selectbox("🔑 Select Case ID (Simulating Victim Login):"
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 cursor.execute("""
-    SELECT category, category_weight, channel, language, MAX(week_number)
+    SELECT category, category_weight, channel, language, state, district, MAX(week_number)
     FROM checkins
     WHERE case_id = ?
 """, (selected_case_id,))
@@ -87,7 +87,7 @@ if not meta_row or meta_row[0] is None:
     st.error(f"⚠️ Selected Case ID '{selected_case_id}' has no prior check-in records. Unable to locate profile metadata.")
     st.stop()
 
-category, category_weight, channel, language, max_week = meta_row
+category, category_weight, channel, language, state, district, max_week = meta_row
 next_week = max_week + 1
 
 st.caption(f"**Profile Meta**: Category: `{category}` | Preferred Channel: `{channel}` | Next Expected Check-in: **Week {next_week}**")
@@ -144,38 +144,55 @@ if st.button("💌 Submit Weekly Check-in", type="primary", use_container_width=
     cursor = conn.cursor()
     cursor.execute("""
         INSERT INTO checkins (
-            case_id, category, category_weight, channel, language,
+            case_id, category, category_weight, channel, language, state, district,
             week_number, checkin_date, structured_score, free_text,
             responded, trajectory_type
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
     """, (
         selected_case_id, category, category_weight, channel, language,
-        next_week, today_str, structured_score, free_text, 1, "live_submission"
+        state, district, next_week, today_str, structured_score, free_text, 1, "live_submission"
     ))
     conn.commit()
-    
-    # Retrieve newly inserted row dictionary to calculate dynamic distress score
+
+    # Retrieve newly inserted row to calculate dynamic distress score
     new_row_id = cursor.lastrowid
     cursor.execute("SELECT * FROM checkins WHERE id = ?;", (new_row_id,))
     row_data = cursor.fetchone()
     conn.close()
-    
+
     new_row_dict = {
-        "structured_score": row_data[8],
-        "free_text": row_data[9]
+        "structured_score": row_data[10],
+        "free_text": row_data[11]
     }
-    
+
     computed_score = compute_dynamic_distress_score(new_row_dict)
     sent_score = get_sentiment_distress(free_text)
-    
-    st.balloons()
-    st.success("💙 Thank you for submitting your check-in! Your response has been securely recorded.")
-    
-    # Display confirmation metric card
-    st.markdown("### 📊 Check-in Confirmation Summary")
+
+    # Professional confirmation — no balloons
+    st.markdown("""
+    <div style="
+        background: linear-gradient(135deg, #0F4C2A 0%, #166534 100%);
+        color: white;
+        padding: 1.2rem 1.6rem;
+        border-radius: 10px;
+        margin-top: 1rem;
+        margin-bottom: 1rem;
+    ">
+        <div style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.3rem;">
+            ✅ Check-in Submitted Successfully
+        </div>
+        <div style="font-size: 0.92rem; color: #BBF7D0;">
+            Your response has been securely recorded. Your assigned counsellor will review your status.
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Confirmation metric summary
+    st.markdown("#### 📊 This Week's Submission Summary")
     col1, col2, col3 = st.columns(3)
-    col1.metric(label="Structured Score (0-27)", value=f"{structured_score} / 27")
-    col2.metric(label="Sentiment Distress (0-10)", value=f"{sent_score:.2f} / 10")
-    col3.metric(label="Computed Dynamic Distress Score", value=f"{computed_score:.2f} / 35")
-    
-    st.info("ℹ️ Your counsellor dashboard will reflect this updated check-in immediately.")
+    col1.metric(label="Structured Score (0–27)",        value=f"{structured_score} / 27")
+    col2.metric(label="Sentiment Distress (0–10)",      value=f"{sent_score:.2f} / 10")
+    col3.metric(label="Dynamic Distress Score (0–35)",  value=f"{computed_score:.2f} / 35")
+
+    st.info("ℹ️ The counsellor dashboard will reflect this updated check-in immediately after refresh.")
+
