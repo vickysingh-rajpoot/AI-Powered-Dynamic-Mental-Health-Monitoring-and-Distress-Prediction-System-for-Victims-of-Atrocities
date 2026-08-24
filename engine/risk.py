@@ -3,7 +3,7 @@ import sys
 import sqlite3
 import pandas as pd
 
-# Add parent directory to sys.path to support imports
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from engine.trend import get_trend_for_case
@@ -12,18 +12,18 @@ from engine.disengagement import check_disengagement
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DB_PATH = os.path.join(BASE_DIR, "db", "victims.db")
 
-# Fixed list of threat-related keywords
+
 THREAT_KEYWORDS = [
-    "threat", "threatened", "followed", "scared", "afraid", 
+    "threat", "threatened", "followed", "scared", "afraid",
     "unsafe", "warned", "watched", "intimidate", "withdraw the case"
 ]
 
-# Named weight constants for composite risk calculation
+
 TREND_WORSENING_POINTS = 40
 TREND_STABLE_POINTS = 15
 TREND_IMPROVING_POINTS = 0
 
-CATEGORY_WEIGHT_MULTIPLIER = 5  # category_weight (1 to 5) * 5 -> up to 25 points
+CATEGORY_WEIGHT_MULTIPLIER = 5
 
 THREAT_KEYWORD_POINTS = 20
 DISENGAGEMENT_POINTS = 15
@@ -43,7 +43,7 @@ def detect_threat_keywords(case_id: str) -> bool:
     cursor.execute(query, (case_id,))
     rows = cursor.fetchall()
     conn.close()
-    
+
     for (text,) in rows:
         if text:
             lower_text = text.lower()
@@ -60,39 +60,39 @@ def compute_composite_risk(case_id: str) -> dict:
     Returns dict with keys: case_id, composite_score, trend_contribution, category_contribution,
     threat_contribution, disengagement_contribution.
     """
-    # 1. Trend analysis
+
     trend_info = get_trend_for_case(case_id)
     classification = trend_info["classification"]
     if classification == "worsening":
         trend_contrib = TREND_WORSENING_POINTS
     elif classification == "stable":
         trend_contrib = TREND_STABLE_POINTS
-    else:  # 'improving'
+    else:
         trend_contrib = TREND_IMPROVING_POINTS
-        
-    # 2. Disengagement analysis
+
+
     disengage_info = check_disengagement(case_id)
     is_disengaged = disengage_info["disengaged"]
     disengage_contrib = DISENGAGEMENT_POINTS if is_disengaged else 0
-    
-    # 3. Threat keyword detection
+
+
     has_threat = detect_threat_keywords(case_id)
     threat_contrib = THREAT_KEYWORD_POINTS if has_threat else 0
-    
-    # 4. Category weight from DB
+
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute("SELECT category_weight FROM checkins WHERE case_id = ? LIMIT 1;", (case_id,))
     row = cursor.fetchone()
     conn.close()
-    
+
     category_weight = row[0] if row else 1
     category_contrib = category_weight * CATEGORY_WEIGHT_MULTIPLIER
-    
-    # Total composite score capped at 100
+
+
     raw_score = trend_contrib + category_contrib + threat_contrib + disengage_contrib
     composite_score = min(100, raw_score)
-    
+
     return {
         "case_id": case_id,
         "composite_score": composite_score,
@@ -109,14 +109,14 @@ def explain_risk(case_id: str) -> dict:
     """
     risk_info = compute_composite_risk(case_id)
     score = risk_info["composite_score"]
-    
+
     if score >= RISK_THRESHOLD_HIGH:
         classification = "High"
     elif score >= RISK_THRESHOLD_MODERATE:
         classification = "Moderate"
     else:
         classification = "Low"
-        
+
     return {
         "case_id": case_id,
         "composite_score": score,
@@ -140,7 +140,7 @@ def get_all_cases_ranked() -> pd.DataFrame:
     cursor.execute("SELECT DISTINCT case_id FROM checkins ORDER BY case_id ASC;")
     case_ids = [r[0] for r in cursor.fetchall()]
     conn.close()
-    
+
     rows = []
     for cid in case_ids:
         res = explain_risk(cid)
@@ -154,7 +154,7 @@ def get_all_cases_ranked() -> pd.DataFrame:
             "threat_contribution": factors["threat_contribution"],
             "disengagement_contribution": factors["disengagement_contribution"]
         })
-        
+
     df = pd.DataFrame(rows)
     df = df.sort_values(by="composite_score", ascending=False).reset_index(drop=True)
     return df
@@ -162,7 +162,7 @@ def get_all_cases_ranked() -> pd.DataFrame:
 if __name__ == "__main__":
     pd.set_option("display.max_columns", None)
     pd.set_option("display.width", 1000)
-    
+
     print("--- Composite Risk Ranking for All Cases ---")
     ranked_df = get_all_cases_ranked()
     print(ranked_df)

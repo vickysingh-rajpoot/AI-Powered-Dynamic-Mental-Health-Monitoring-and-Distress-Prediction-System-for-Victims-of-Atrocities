@@ -2,12 +2,12 @@ import os
 import sys
 import numpy as np
 
-# Add parent directory to path to support running directly or as module
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from engine.scoring import score_all_checkins
 
-# Named constant for trend classification threshold
+
 TREND_THRESHOLD = 0.8
 
 def compute_trend_slope(scores: list) -> float:
@@ -18,13 +18,13 @@ def compute_trend_slope(scores: list) -> float:
     If fewer than 2 valid scores remain, returns 0.0.
     """
     valid_pairs = [(i, float(s)) for i, s in enumerate(scores) if s is not None]
-    
+
     if len(valid_pairs) < 2:
         return 0.0
-    
+
     x = np.array([pair[0] for pair in valid_pairs], dtype=float)
     y = np.array([pair[1] for pair in valid_pairs], dtype=float)
-    
+
     slope, _ = np.polyfit(x, y, 1)
     return float(slope)
 
@@ -53,13 +53,13 @@ def get_trend_for_case(case_id: str) -> dict:
         raise ValueError(f"No check-in records found for case_id '{case_id}'")
 
     all_scores = df["dynamic_distress_score"].tolist()
-    
-    # Use only the last 6 entries (or fewer if total history < 6)
+
+
     scores_used = all_scores[-6:] if len(all_scores) >= 6 else all_scores
-    
+
     slope = compute_trend_slope(scores_used)
     classification = classify_trend(slope, TREND_THRESHOLD)
-    
+
     return {
         "case_id": case_id,
         "slope": round(slope, 3),
@@ -69,7 +69,7 @@ def get_trend_for_case(case_id: str) -> dict:
 
 if __name__ == "__main__":
     test_cases = ['ATR-2026-0001', 'ATR-2026-0003', 'ATR-2026-0006']
-    
+
     print("--- Trend Analysis Verification ---")
     for cid in test_cases:
         res = get_trend_for_case(cid)

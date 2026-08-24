@@ -13,9 +13,9 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from engine.risk import explain_risk
 
-# ---------------------------------------------------------------------------
-# Intervention Rule Definitions
-# ---------------------------------------------------------------------------
+
+
+
 
 INTERVENTIONS = {
     "witness_protection": {
@@ -87,10 +87,10 @@ INTERVENTIONS = {
 }
 
 URGENCY_COLOR = {
-    "CRITICAL": "#DC2626",   # red
-    "HIGH":     "#EA580C",   # orange
-    "MODERATE": "#D97706",   # amber
-    "LOW":      "#16A34A"    # green
+    "CRITICAL": "#DC2626",
+    "HIGH":     "#EA580C",
+    "MODERATE": "#D97706",
+    "LOW":      "#16A34A"
 }
 
 
@@ -106,27 +106,27 @@ def generate_interventions(case_id: str) -> list[dict]:
 
     selected = []
 
-    # Rule 1: Threat keyword detected → Witness Protection (highest priority)
+
     if factors["threat_contribution"] > 0:
         selected.append(INTERVENTIONS["witness_protection"])
 
-    # Rule 2: Disengaged (missed 2+ check-ins) → Field Home Visit
+
     if factors["disengagement_contribution"] > 0:
         selected.append(INTERVENTIONS["field_visit"])
 
-    # Rule 3: Worsening trend → Psychiatric Care
+
     if factors["trend_contribution"] >= 40:
         selected.append(INTERVENTIONS["psychiatric_care"])
 
-    # Rule 4: High category severity (weight >= 4) → Legal Aid
+
     if factors["category_contribution"] >= 20:
         selected.append(INTERVENTIONS["legal_aid"])
 
-    # Rule 5: Moderate risk but no other triggers → Counselling
+
     if score >= 35 and not selected:
         selected.append(INTERVENTIONS["counselling"])
 
-    # Rule 6: Low risk → Monitor only
+
     if score < 35:
         selected.append(INTERVENTIONS["monitor_only"])
 

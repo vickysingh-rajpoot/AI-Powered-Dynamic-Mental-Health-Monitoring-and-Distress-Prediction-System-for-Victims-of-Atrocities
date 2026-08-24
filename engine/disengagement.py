@@ -14,24 +14,24 @@ def check_disengagement(case_id: str) -> dict:
     """
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
-    
-    # Query all check-ins for case_id ordered by week_number descending
+
+
     query_all = "SELECT week_number, responded FROM checkins WHERE case_id = ? ORDER BY week_number DESC;"
     cursor.execute(query_all, (case_id,))
     rows = cursor.fetchall()
     conn.close()
-    
-    # Calculate missed_weeks across ALL check-ins
-    # Note: rows is ordered week_number DESC, let's sort missed_weeks in ascending order for cleanliness
+
+
+
     missed_weeks = sorted([r[0] for r in rows if r[1] == 0])
-    
-    # Check disengagement on 2 most recent rows
+
+
     if len(rows) < 2:
         is_disengaged = False
     else:
         most_recent_two = rows[:2]
         is_disengaged = all(r[1] == 0 for r in most_recent_two)
-        
+
     return {
         "case_id": case_id,
         "disengaged": is_disengaged,
@@ -40,7 +40,7 @@ def check_disengagement(case_id: str) -> dict:
 
 if __name__ == "__main__":
     test_cases = ['ATR-2026-0005', 'ATR-2026-0009', 'ATR-2026-0001']
-    
+
     print("--- Disengagement Detection Verification ---")
     for cid in test_cases:
         res = check_disengagement(cid)

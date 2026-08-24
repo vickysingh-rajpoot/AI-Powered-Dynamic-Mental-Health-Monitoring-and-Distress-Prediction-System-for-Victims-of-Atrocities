@@ -81,7 +81,7 @@ with col2:
 
 st.divider()
 
-# System Database Status Indicator & Auto-Initialization for Streamlit Cloud
+
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "db", "victims.db")
 

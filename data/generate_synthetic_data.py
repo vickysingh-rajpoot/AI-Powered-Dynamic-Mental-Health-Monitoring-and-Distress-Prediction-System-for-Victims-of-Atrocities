@@ -4,7 +4,7 @@ import csv
 import random
 from datetime import datetime, timedelta
 
-# Set fixed random seed for reproducibility
+
 random.seed(42)
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -174,7 +174,7 @@ def get_free_text(score: int, case_id: str, week: int, trajectory: str) -> str:
 
     if score is None:
         return ""
-    
+
     if score < 10:
         return random.choice(NEUTRAL_TEXTS)
     elif score <= 15:
@@ -191,30 +191,30 @@ def generate_weekly_scores(trajectory: str) -> list[tuple[int | None, int]]:
         for w in range(1, 8):
             res.append((min(27, current), 1))
             current += random.randint(2, 4)
-            
+
     elif trajectory == "improving":
         current = random.randint(16, 20)
         for w in range(1, 8):
             res.append((max(2, current), 1))
             current -= random.randint(1, 3)
-            
+
     elif trajectory == "fluctuating_stable":
         for w in range(1, 8):
             score = random.randint(9, 13)
             res.append((score, 1))
-            
+
     elif trajectory == "sudden_threat":
         for w in range(1, 6):
             score = random.randint(7, 10)
             res.append((score, 1))
         res.append((random.randint(21, 23), 1))
         res.append((random.randint(24, 27), 1))
-        
+
     elif trajectory == "steady_high_risk":
         for w in range(1, 8):
             score = random.randint(20, 24)
             res.append((score, 1))
-            
+
     elif trajectory == "disengaging":
         current = random.randint(8, 11)
         for w in range(1, 6):
@@ -228,17 +228,17 @@ def generate_weekly_scores(trajectory: str) -> list[tuple[int | None, int]]:
 def main():
     os.makedirs(DB_DIR, exist_ok=True)
     os.makedirs(DATA_DIR, exist_ok=True)
-    
+
     if os.path.exists(DB_PATH):
         os.remove(DB_PATH)
-        
+
     conn = sqlite3.connect(DB_PATH)
     cursor = conn.cursor()
     cursor.execute(CREATE_TABLE_SQL)
-    
+
     today = datetime.now()
     records = []
-    
+
     for prof in PROFILES:
         case_id = prof["case_id"]
         category = prof["category"]
@@ -248,19 +248,19 @@ def main():
         state = prof["state"]
         district = prof["district"]
         trajectory = prof["trajectory_type"]
-        
+
         scores_info = generate_weekly_scores(trajectory)
-        
+
         for week in range(1, 8):
             weeks_ago = 7 - week
             checkin_date = (today - timedelta(weeks=weeks_ago)).strftime("%Y-%m-%d")
             struct_score, responded = scores_info[week - 1]
-            
+
             if responded == 0:
                 free_text = ""
             else:
                 free_text = get_free_text(struct_score, case_id, week, trajectory)
-                
+
             records.append({
                 "case_id": case_id,
                 "category": category,
@@ -276,7 +276,7 @@ def main():
                 "responded": responded,
                 "trajectory_type": trajectory
             })
-            
+
     insert_sql = """
     INSERT INTO checkins (
         case_id, category, category_weight, channel, language, state, district,
@@ -295,7 +295,7 @@ def main():
     cursor.executemany(insert_sql, db_rows)
     conn.commit()
     conn.close()
-    
+
     csv_headers = [
         "id", "case_id", "category", "category_weight", "channel", "language", "state", "district",
         "week_number", "checkin_date", "structured_score", "free_text",
@@ -311,7 +311,7 @@ def main():
                 r["structured_score"] if r["structured_score"] is not None else "",
                 r["free_text"], r["responded"], r["trajectory_type"]
             ])
-            
+
     print(f"Total synthetic check-in records created: {len(records)} with State & District metadata.")
 
 if __name__ == "__main__":

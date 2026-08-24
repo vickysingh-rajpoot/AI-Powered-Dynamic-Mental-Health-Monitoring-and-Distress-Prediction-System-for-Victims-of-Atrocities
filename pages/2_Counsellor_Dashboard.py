@@ -5,7 +5,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 
-# Add parent directory to path for engine imports
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from engine.risk import get_all_cases_ranked, explain_risk
@@ -68,12 +68,12 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# ── Auto-init database if missing (Streamlit Cloud) ──────────────────────────
+
 if not os.path.exists(DB_PATH):
     from data.generate_synthetic_data import main as init_db
     init_db()
 
-# ── Helper: load enriched case table from DB ─────────────────────────────────
+
 @st.cache_data(ttl=0)
 def load_case_meta():
     conn = sqlite3.connect(DB_PATH)
@@ -90,9 +90,9 @@ def load_case_meta():
     conn.close()
     return df
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# HEADER + REFRESH BUTTON
-# ═══════════════════════════════════════════════════════════════════════════════
+
+
+
 head_col1, head_col2 = st.columns([4, 1])
 
 with head_col1:
@@ -112,9 +112,9 @@ with head_col2:
 
 st.divider()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# FEATURE 1 — MULTI-TIER HIERARCHY FILTER (National / State / District)
-# ═══════════════════════════════════════════════════════════════════════════════
+
+
+
 st.subheader("🌐 Administrative Hierarchy Filter")
 st.caption("Filter the triage dashboard by National overview, State, or District level — mirroring real government monitoring portals.")
 
@@ -150,19 +150,19 @@ with filter_col3:
 
 st.divider()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# LOAD & FILTER RANKED DATA
-# ═══════════════════════════════════════════════════════════════════════════════
+
+
+
 ranked_df = get_all_cases_ranked()
 
 if ranked_df.empty:
     st.warning("⚠️ No victim case data available.")
     st.stop()
 
-# Merge state/district/category/channel into ranked_df
+
 ranked_df = ranked_df.merge(case_meta_df, on="case_id", how="left")
 
-# Apply geographic filter based on admin level selection
+
 if admin_level == "🏢 State Level" and selected_state:
     ranked_df = ranked_df[ranked_df["state"] == selected_state].reset_index(drop=True)
 elif admin_level == "📍 District Level" and selected_district:
@@ -172,7 +172,7 @@ if ranked_df.empty:
     st.warning("No cases found for the selected region.")
     st.stop()
 
-# ─── Summary Metrics ─────────────────────────────────────────────────────────
+
 total_cases = len(ranked_df)
 high_cases  = len(ranked_df[ranked_df["classification"] == "High"])
 mod_cases   = len(ranked_df[ranked_df["classification"] == "Moderate"])
@@ -186,7 +186,7 @@ m4.metric("🟢 Low Risk Cases",       low_cases)
 
 st.subheader("📋 Case Risk Priority Matrix (Sorted Highest → Lowest Risk)")
 
-# Build display table with channel badges and region info
+
 def fmt_badge(val):
     if val == "High":
         return "🔴 HIGH RISK"
@@ -229,9 +229,9 @@ st.dataframe(
 
 st.divider()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# DETAILED CASE INSPECTION
-# ═══════════════════════════════════════════════════════════════════════════════
+
+
+
 st.subheader("🔎 Individual Case Inspection & Explainability Analysis")
 
 case_id_list = ranked_df["case_id"].tolist()
@@ -241,14 +241,14 @@ selected_case_id = st.selectbox(
     key="case_inspect_select"
 )
 
-# Fetch row for selected case
+
 case_row = ranked_df[ranked_df["case_id"] == selected_case_id].iloc[0]
 case_state    = case_row.get("state",    "N/A")
 case_district = case_row.get("district", "N/A")
 case_category = case_row.get("category", "N/A")
 case_channel  = case_row.get("channel",  "N/A")
 
-# Show meta info strip
+
 info_cols = st.columns(4)
 info_cols[0].info(f"📍 **Location**: {case_district}, {case_state}")
 info_cols[1].info(f"🏷️ **Category**: {case_category}")
@@ -263,7 +263,7 @@ factors        = risk_explanation["factors"]
 classification = risk_explanation["classification"]
 score_val      = risk_explanation["composite_score"]
 
-# ─── Charts ─────────────────────────────────────────────────────────────────
+
 col_chart_left, col_chart_right = st.columns(2)
 
 with col_chart_left:
@@ -306,7 +306,7 @@ with col_chart_right:
     fig_bar.update_layout(xaxis_range=[0, 45], showlegend=False, margin=dict(l=20, r=20, t=40, b=20))
     st.plotly_chart(fig_bar, use_container_width=True)
 
-# ─── XAI Plain Text Summary ──────────────────────────────────────────────────
+
 trend_class     = trend_info["classification"]
 threat_text     = "detected in recent check-in text" if factors["threat_contribution"] > 0 else "not detected"
 disengage_text  = "victim is disengaged (missed consecutive check-ins)" if factors["disengagement_contribution"] > 0 else "victim is actively responding"
@@ -321,9 +321,9 @@ else:
 
 st.divider()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# FEATURE 2 — AUTOMATED INTERVENTION RECOMMENDATIONS
-# ═══════════════════════════════════════════════════════════════════════════════
+
+
+
 st.subheader("💊 Automated Intervention Recommendations")
 st.caption("Generated by the rule-based intervention engine under SC/ST (Prevention of Atrocities) Act, 1989.")
 
@@ -350,9 +350,9 @@ for intv in interventions:
 
 st.divider()
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# FEATURE 3 — EMERGENCY SOS DISPATCHER (only for High Risk cases)
-# ═══════════════════════════════════════════════════════════════════════════════
+
+
+
 st.subheader("🚨 Emergency SOS Authority Dispatcher")
 
 if classification == "High":
