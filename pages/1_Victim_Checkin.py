@@ -76,9 +76,13 @@ selected_case_id = st.selectbox("🔑 Select Case ID (Simulating Victim Login):"
 conn = sqlite3.connect(DB_PATH)
 cursor = conn.cursor()
 cursor.execute("""
-    SELECT category, category_weight, channel, language, state, district, MAX(week_number)
+        SELECT category, category_weight, channel, language, state, district, week_number
     FROM checkins
-    WHERE case_id = ?
+        WHERE case_id = ?
+            AND state IS NOT NULL
+            AND district IS NOT NULL
+        ORDER BY week_number DESC, id DESC
+        LIMIT 1
 """, (selected_case_id,))
 meta_row = cursor.fetchone()
 conn.close()

@@ -20,7 +20,17 @@ def get_structured_score(row) -> int | None:
         
     if val is None or pd.isna(val) or str(val).strip() == "" or str(val).upper() == "NONE":
         return None
-    return int(val)
+    if isinstance(val, float) and not val.is_integer():
+        raise ValueError("structured_score must be an integer from 0 to 27")
+
+    try:
+        score = int(val)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("structured_score must be an integer from 0 to 27") from exc
+
+    if not 0 <= score <= 27:
+        raise ValueError("structured_score must be an integer from 0 to 27")
+    return score
 
 def get_sentiment_distress(free_text: str | None) -> float:
     """

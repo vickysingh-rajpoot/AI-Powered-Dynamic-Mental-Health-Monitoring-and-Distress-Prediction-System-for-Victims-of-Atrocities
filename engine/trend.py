@@ -49,6 +49,9 @@ def get_trend_for_case(case_id: str) -> dict:
     and returns a dictionary with exact keys: case_id, slope, classification, scores_used.
     """
     df = score_all_checkins(case_id)
+    if df.empty:
+        raise ValueError(f"No check-in records found for case_id '{case_id}'")
+
     all_scores = df["dynamic_distress_score"].tolist()
     
     # Use only the last 6 entries (or fewer if total history < 6)

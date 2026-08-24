@@ -78,7 +78,13 @@ if not os.path.exists(DB_PATH):
 def load_case_meta():
     conn = sqlite3.connect(DB_PATH)
     df = pd.read_sql_query(
-        "SELECT DISTINCT case_id, category, state, district, channel FROM checkins;",
+        """
+        SELECT case_id, category, state, district, channel
+        FROM checkins
+        WHERE state IS NOT NULL AND district IS NOT NULL
+        GROUP BY case_id
+        HAVING id = MAX(id)
+        """,
         conn
     )
     conn.close()
