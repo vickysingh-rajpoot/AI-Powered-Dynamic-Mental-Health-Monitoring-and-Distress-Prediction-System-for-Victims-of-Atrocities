@@ -3,7 +3,6 @@ import sys
 import sqlite3
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 import streamlit as st
 
 # Add parent directory to path for engine imports
@@ -12,6 +11,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from engine.risk import get_all_cases_ranked, explain_risk
 from engine.trend import get_trend_for_case
 from engine.scoring import score_all_checkins
+from engine.interventions import generate_interventions, get_sos_notice, URGENCY_COLOR
 
 st.set_page_config(
     page_title="Counsellor Triage Dashboard",
@@ -24,49 +24,13 @@ DB_PATH = os.path.join(BASE_DIR, "db", "victims.db")
 
 st.markdown("""
 <style>
-    .dash-header {
-        background: linear-gradient(135deg, #0F172A 0%, #1E3A8A 100%);
-        color: white;
-        padding: 1.2rem 1.8rem;
-        border-radius: 10px;
-        margin-bottom: 1.2rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
     .dash-header h2 {
-        color: white !important;
-        margin: 0;
-        font-size: 1.8rem;
+        color: #1E3A8A;
+        margin-bottom: 0.2rem;
     }
     .dash-header p {
-        color: #94A3B8;
-        margin: 0.2rem 0 0 0;
-        font-size: 0.95rem;
-    }
-    .badge-high {
-        background-color: #FEE2E2;
-        color: #991B1B;
-        padding: 0.25rem 0.6rem;
-        border-radius: 6px;
-        font-weight: 700;
-        display: inline-block;
-    }
-    .badge-mod {
-        background-color: #FEF3C7;
-        color: #92400E;
-        padding: 0.25rem 0.6rem;
-        border-radius: 6px;
-        font-weight: 700;
-        display: inline-block;
-    }
-    .badge-low {
-        background-color: #D1FAE5;
-        color: #065F46;
-        padding: 0.25rem 0.6rem;
-        border-radius: 6px;
-        font-weight: 700;
-        display: inline-block;
+        color: #64748B;
+        margin-top: 0;
     }
     .rationale-box {
         background-color: #F8FAFC;
@@ -77,17 +41,59 @@ st.markdown("""
         font-size: 1.05rem;
         color: #1E293B;
     }
+    .intervention-card {
+        border-radius: 8px;
+        padding: 0.85rem 1rem;
+        margin-bottom: 0.6rem;
+        border-left: 5px solid;
+    }
+    .intervention-title {
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-bottom: 0.3rem;
+    }
+    .intervention-action {
+        font-size: 0.88rem;
+        color: #374151;
+    }
+    .channel-badge {
+        display: inline-block;
+        padding: 0.15rem 0.55rem;
+        border-radius: 999px;
+        font-size: 0.78rem;
+        font-weight: 600;
+        background-color: #DBEAFE;
+        color: #1D4ED8;
+    }
 </style>
 """, unsafe_allow_html=True)
 
-# Header Section with Refresh Button
+# ── Auto-init database if missing (Streamlit Cloud) ──────────────────────────
+if not os.path.exists(DB_PATH):
+    from data.generate_synthetic_data import main as init_db
+    init_db()
+
+# ── Helper: load enriched case table from DB ─────────────────────────────────
+@st.cache_data(ttl=0)
+def load_case_meta():
+    conn = sqlite3.connect(DB_PATH)
+    df = pd.read_sql_query(
+        "SELECT DISTINCT case_id, category, state, district, channel FROM checkins;",
+        conn
+    )
+    conn.close()
+    return df
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# HEADER + REFRESH BUTTON
+# ═══════════════════════════════════════════════════════════════════════════════
 head_col1, head_col2 = st.columns([4, 1])
 
 with head_col1:
     st.markdown("""
-    <div>
-        <h2 style="color: #1E3A8A; margin-bottom: 0.2rem;">🏛️ Victim Case Triage & Risk Dashboard</h2>
-        <p style="color: #64748B; margin-top: 0;">Ministry of Social Justice & Empowerment | SIH26094 Monitoring Pipeline</p>
+    <div class="dash-header">
+        <h2>🏛️ Victim Case Triage &amp; Risk Dashboard</h2>
+        <p>Ministry of Social Justice &amp; Empowerment | SIH26094 Monitoring Pipeline</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -100,111 +106,171 @@ with head_col2:
 
 st.divider()
 
-if not os.path.exists(DB_PATH):
-    from data.generate_synthetic_data import main as init_db
-    init_db()
+# ═══════════════════════════════════════════════════════════════════════════════
+# FEATURE 1 — MULTI-TIER HIERARCHY FILTER (National / State / District)
+# ═══════════════════════════════════════════════════════════════════════════════
+st.subheader("🌐 Administrative Hierarchy Filter")
+st.caption("Filter the triage dashboard by National overview, State, or District level — mirroring real government monitoring portals.")
 
-# Fetch ranked cases data
+case_meta_df = load_case_meta()
+
+filter_col1, filter_col2, filter_col3 = st.columns(3)
+with filter_col1:
+    admin_level = st.radio(
+        "Select Administration Level:",
+        options=["🇮🇳 National Overview", "🏢 State Level", "📍 District Level"],
+        horizontal=False,
+        key="admin_level_radio"
+    )
+with filter_col2:
+    if admin_level == "🏢 State Level":
+        states = sorted(case_meta_df["state"].dropna().unique().tolist())
+        selected_state = st.selectbox("Select State:", options=states, key="state_select")
+    elif admin_level == "📍 District Level":
+        states = sorted(case_meta_df["state"].dropna().unique().tolist())
+        selected_state = st.selectbox("Select State:", options=states, key="state_select_d")
+    else:
+        selected_state = None
+        st.info("Showing all cases across India.")
+with filter_col3:
+    if admin_level == "📍 District Level" and selected_state:
+        districts = sorted(
+            case_meta_df[case_meta_df["state"] == selected_state]["district"]
+            .dropna().unique().tolist()
+        )
+        selected_district = st.selectbox("Select District:", options=districts, key="district_select")
+    else:
+        selected_district = None
+
+st.divider()
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# LOAD & FILTER RANKED DATA
+# ═══════════════════════════════════════════════════════════════════════════════
 ranked_df = get_all_cases_ranked()
 
 if ranked_df.empty:
     st.warning("⚠️ No victim case data available.")
     st.stop()
 
-# Fetch categories from database to enrich main display table
-conn = sqlite3.connect(DB_PATH)
-cursor = conn.cursor()
-cursor.execute("SELECT DISTINCT case_id, category FROM checkins;")
-cat_map = dict(cursor.fetchall())
-conn.close()
+# Merge state/district/category/channel into ranked_df
+ranked_df = ranked_df.merge(case_meta_df, on="case_id", how="left")
 
-ranked_df["category"] = ranked_df["case_id"].map(cat_map).fillna("Unknown Category")
+# Apply geographic filter based on admin level selection
+if admin_level == "🏢 State Level" and selected_state:
+    ranked_df = ranked_df[ranked_df["state"] == selected_state].reset_index(drop=True)
+elif admin_level == "📍 District Level" and selected_district:
+    ranked_df = ranked_df[ranked_df["district"] == selected_district].reset_index(drop=True)
 
-# Calculate summary metric numbers
+if ranked_df.empty:
+    st.warning("No cases found for the selected region.")
+    st.stop()
+
+# ─── Summary Metrics ─────────────────────────────────────────────────────────
 total_cases = len(ranked_df)
-high_cases = len(ranked_df[ranked_df["classification"] == "High"])
-mod_cases = len(ranked_df[ranked_df["classification"] == "Moderate"])
-low_cases = len(ranked_df[ranked_df["classification"] == "Low"])
+high_cases  = len(ranked_df[ranked_df["classification"] == "High"])
+mod_cases   = len(ranked_df[ranked_df["classification"] == "Moderate"])
+low_cases   = len(ranked_df[ranked_df["classification"] == "Low"])
 
-# Summary Cards Row
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("📊 Total Tracked Cases", total_cases)
-m2.metric("🔴 High Risk Cases", high_cases, delta="Action Required", delta_color="inverse")
-m3.metric("🟡 Moderate Risk Cases", mod_cases)
-m4.metric("🟢 Low Risk Cases", low_cases)
+m1.metric("📊 Total Tracked Cases",  total_cases)
+m2.metric("🔴 High Risk Cases",      high_cases,  delta="Action Required", delta_color="inverse")
+m3.metric("🟡 Moderate Risk Cases",  mod_cases)
+m4.metric("🟢 Low Risk Cases",       low_cases)
 
-st.subheader("📋 Case Risk Priority Matrix (Sorted Highest to Lowest Risk)")
+st.subheader("📋 Case Risk Priority Matrix (Sorted Highest → Lowest Risk)")
 
-# Build presentation table with HTML color badges for clear visual distinction
-display_df = ranked_df[["case_id", "category", "composite_score", "classification"]].copy()
-
-def format_risk_badge(val):
+# Build display table with channel badges and region info
+def fmt_badge(val):
     if val == "High":
         return "🔴 HIGH RISK"
     elif val == "Moderate":
         return "🟡 MODERATE RISK"
-    else:
-        return "🟢 LOW RISK"
+    return "🟢 LOW RISK"
 
-display_df["Risk Badge"] = display_df["classification"].apply(format_risk_badge)
+display_df = ranked_df[[
+    "case_id", "category", "state", "district", "channel",
+    "composite_score", "classification"
+]].copy()
+
+display_df["Risk Level"] = display_df["classification"].apply(fmt_badge)
 display_df.rename(columns={
-    "case_id": "Case ID",
-    "category": "Victim Crime Category",
-    "composite_score": "Composite Risk Score (0-100)"
+    "case_id":         "Case ID",
+    "category":        "Crime Category",
+    "state":           "State",
+    "district":        "District",
+    "channel":         "Channel",
+    "composite_score": "Risk Score (0–100)"
 }, inplace=True)
 
-# Display Table using Streamlit Dataframe with styled column config
 st.dataframe(
-    display_df[["Case ID", "Victim Crime Category", "Composite Risk Score (0-100)", "Risk Badge"]],
+    display_df[["Case ID", "Crime Category", "State", "District", "Channel", "Risk Score (0–100)", "Risk Level"]],
     use_container_width=True,
     hide_index=True,
     column_config={
-        "Composite Risk Score (0-100)": st.column_config.ProgressColumn(
-            "Composite Risk Score (0-100)",
+        "Risk Score (0–100)": st.column_config.ProgressColumn(
+            "Risk Score (0–100)",
             format="%d / 100",
             min_value=0,
             max_value=100
         ),
-        "Risk Badge": st.column_config.TextColumn(
-            "Risk Level Badge",
-            help="High >= 60 | Moderate >= 35 | Low < 35"
+        "Risk Level": st.column_config.TextColumn(
+            "Risk Level",
+            help="High ≥ 60 | Moderate ≥ 35 | Low < 35"
         )
     }
 )
 
 st.divider()
 
-# Detailed Case Inspection Section
+# ═══════════════════════════════════════════════════════════════════════════════
+# DETAILED CASE INSPECTION
+# ═══════════════════════════════════════════════════════════════════════════════
 st.subheader("🔎 Individual Case Inspection & Explainability Analysis")
 
 case_id_list = ranked_df["case_id"].tolist()
-selected_case_id = st.selectbox("Select Case ID to inspect detailed distress trajectory & factor breakdown:", case_id_list)
+selected_case_id = st.selectbox(
+    "Select Case ID to inspect detailed distress trajectory & factor breakdown:",
+    case_id_list,
+    key="case_inspect_select"
+)
 
-# Load data for selected case
-case_scores_df = score_all_checkins(selected_case_id)
-trend_info = get_trend_for_case(selected_case_id)
+# Fetch row for selected case
+case_row = ranked_df[ranked_df["case_id"] == selected_case_id].iloc[0]
+case_state    = case_row.get("state",    "N/A")
+case_district = case_row.get("district", "N/A")
+case_category = case_row.get("category", "N/A")
+case_channel  = case_row.get("channel",  "N/A")
+
+# Show meta info strip
+info_cols = st.columns(4)
+info_cols[0].info(f"📍 **Location**: {case_district}, {case_state}")
+info_cols[1].info(f"🏷️ **Category**: {case_category}")
+info_cols[2].info(f"📡 **Channel**: {case_channel}")
+info_cols[3].info(f"🆔 **Case ID**: {selected_case_id}")
+
+case_scores_df   = score_all_checkins(selected_case_id)
+trend_info       = get_trend_for_case(selected_case_id)
 risk_explanation = explain_risk(selected_case_id)
 
-factors = risk_explanation["factors"]
+factors        = risk_explanation["factors"]
 classification = risk_explanation["classification"]
-score_val = risk_explanation["composite_score"]
+score_val      = risk_explanation["composite_score"]
 
-# Side-by-Side Plotly Charts
+# ─── Charts ─────────────────────────────────────────────────────────────────
 col_chart_left, col_chart_right = st.columns(2)
 
 with col_chart_left:
     st.markdown("##### 📈 Dynamic Distress Trajectory Across Check-ins")
-    
     fig_line = px.line(
         case_scores_df,
         x="week_number",
         y="dynamic_distress_score",
         markers=True,
         title=f"Distress Over Time ({selected_case_id}) — Trend: {trend_info['classification'].upper()}",
-        labels={"week_number": "Check-in Week Number", "dynamic_distress_score": "Dynamic Distress Score (Max 35)"},
+        labels={"week_number": "Check-in Week", "dynamic_distress_score": "Dynamic Distress Score (Max 35)"},
         color_discrete_sequence=["#1E3A8A"]
     )
-    
     fig_line.add_hline(y=20.0, line_dash="dash", line_color="#F59E0B", annotation_text="Elevated Warning (20)")
     fig_line.add_hline(y=28.0, line_dash="dash", line_color="#EF4444", annotation_text="Critical Distress (28)")
     fig_line.update_layout(yaxis_range=[0, 36], margin=dict(l=20, r=20, t=40, b=20))
@@ -212,41 +278,113 @@ with col_chart_left:
 
 with col_chart_right:
     st.markdown("##### 📊 Risk Contribution Factor Breakdown")
-    
     factor_labels = {
-        "trend_contribution": "Distress Trend Slope",
-        "category_contribution": "Crime Severity Weight",
-        "threat_contribution": "Threat Language Flag",
-        "disengagement_contribution": "Disengagement Flag"
+        "trend_contribution":          "Distress Trend Slope",
+        "category_contribution":       "Crime Severity Weight",
+        "threat_contribution":         "Threat Language Flag",
+        "disengagement_contribution":  "Disengagement Flag"
     }
-    
     bar_df = pd.DataFrame({
-        "Factor": [factor_labels[k] for k in factors.keys()],
+        "Factor": [factor_labels[k] for k in factors],
         "Points": list(factors.values())
     })
-    
     fig_bar = px.bar(
         bar_df,
         x="Points",
         y="Factor",
         orientation="h",
-        title=f"Explainability Factors (Total Composite Score: {score_val} / 100)",
+        title=f"Explainability Factors — Composite Score: {score_val} / 100",
         color="Points",
         color_continuous_scale="Tealgrn"
     )
     fig_bar.update_layout(xaxis_range=[0, 45], showlegend=False, margin=dict(l=20, r=20, t=40, b=20))
     st.plotly_chart(fig_bar, use_container_width=True)
 
-# One-line plain text summary built purely via Python string formatting
-trend_class = trend_info["classification"]
-threat_text = "detected in recent text" if factors["threat_contribution"] > 0 else "not detected"
-disengage_text = "victim is disengaged (missed consecutive check-ins)" if factors["disengagement_contribution"] > 0 else "victim is actively responding"
-
-plain_text_summary = f"Flagged as {classification} risk: distress trend is {trend_class}, threat-related language {threat_text}, {disengage_text}."
+# ─── XAI Plain Text Summary ──────────────────────────────────────────────────
+trend_class     = trend_info["classification"]
+threat_text     = "detected in recent check-in text" if factors["threat_contribution"] > 0 else "not detected"
+disengage_text  = "victim is disengaged (missed consecutive check-ins)" if factors["disengagement_contribution"] > 0 else "victim is actively responding"
+plain_summary   = f"Flagged as **{classification} Risk**: distress trend is {trend_class}, threat-related language {threat_text}, {disengage_text}."
 
 if classification == "High":
-    st.error(f"🚨 **Case Rationale**: {plain_text_summary}")
+    st.error(f"🚨 **Case Rationale**: {plain_summary}")
 elif classification == "Moderate":
-    st.warning(f"⚠️ **Case Rationale**: {plain_text_summary}")
+    st.warning(f"⚠️ **Case Rationale**: {plain_summary}")
 else:
-    st.success(f"✅ **Case Rationale**: {plain_text_summary}")
+    st.success(f"✅ **Case Rationale**: {plain_summary}")
+
+st.divider()
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FEATURE 2 — AUTOMATED INTERVENTION RECOMMENDATIONS
+# ═══════════════════════════════════════════════════════════════════════════════
+st.subheader("💊 Automated Intervention Recommendations")
+st.caption("Generated by the rule-based intervention engine under SC/ST (Prevention of Atrocities) Act, 1989.")
+
+interventions = generate_interventions(selected_case_id)
+
+for intv in interventions:
+    urgency   = intv["urgency"]
+    border_c  = URGENCY_COLOR.get(urgency, "#6B7280")
+    bg_map    = {"CRITICAL": "#FEF2F2", "HIGH": "#FFF7ED", "MODERATE": "#FFFBEB", "LOW": "#F0FDF4"}
+    bg_color  = bg_map.get(urgency, "#F9FAFB")
+
+    st.markdown(f"""
+    <div class="intervention-card" style="background-color:{bg_color}; border-left-color:{border_c};">
+        <div class="intervention-title" style="color:{border_c};">
+            {intv['icon']} {intv['title']}
+            &nbsp;&nbsp;<span style="font-size:0.75rem; font-weight:600; color:{border_c}; border:1px solid {border_c}; padding:0.1rem 0.4rem; border-radius:4px;">{urgency}</span>
+        </div>
+        <div class="intervention-action">{intv['action']}</div>
+        <div style="margin-top:0.4rem; font-size:0.8rem; color:#6B7280;">
+            Responsible Authority: <strong>{intv['authority']}</strong>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+st.divider()
+
+# ═══════════════════════════════════════════════════════════════════════════════
+# FEATURE 3 — EMERGENCY SOS DISPATCHER (only for High Risk cases)
+# ═══════════════════════════════════════════════════════════════════════════════
+st.subheader("🚨 Emergency SOS Authority Dispatcher")
+
+if classification == "High":
+    st.error(
+        f"**{selected_case_id}** is classified as 🔴 **HIGH RISK** "
+        f"(Score: {score_val}/100). Immediate authority notification is recommended."
+    )
+    if st.button(
+        f"🚨 Dispatch Emergency SOS Notice — {selected_case_id}",
+        type="primary",
+        use_container_width=True
+    ):
+        notice_text = get_sos_notice(
+            selected_case_id,
+            case_state,
+            case_district,
+            case_category
+        )
+        st.code(notice_text, language="text")
+        st.toast(
+            f"🚨 Emergency SOS Notice generated for {selected_case_id}! "
+            "Notify District Magistrate & SSP immediately.",
+            icon="🚨"
+        )
+        st.download_button(
+            label="⬇️ Download SOS Notice as .txt",
+            data=notice_text,
+            file_name=f"SOS_Notice_{selected_case_id}.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
+elif classification == "Moderate":
+    st.warning(
+        f"**{selected_case_id}** is 🟡 **MODERATE RISK** (Score: {score_val}/100). "
+        "Monitor closely. SOS Dispatcher activates only for High Risk cases."
+    )
+else:
+    st.success(
+        f"**{selected_case_id}** is 🟢 **LOW RISK** (Score: {score_val}/100). "
+        "Continue regular monitoring."
+    )
