@@ -55,8 +55,8 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 if not os.path.exists(DB_PATH):
-    st.error("⚠️ System database is not initialized yet. Please generate synthetic data first.")
-    st.stop()
+    from data.generate_synthetic_data import main as init_db
+    init_db()
 
 # Fetch distinct case IDs from SQLite database
 conn = sqlite3.connect(DB_PATH)

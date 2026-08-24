@@ -101,8 +101,8 @@ with head_col2:
 st.divider()
 
 if not os.path.exists(DB_PATH):
-    st.error("⚠️ System database missing. Please initialize synthetic data first.")
-    st.stop()
+    from data.generate_synthetic_data import main as init_db
+    init_db()
 
 # Fetch ranked cases data
 ranked_df = get_all_cases_ranked()

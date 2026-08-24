@@ -81,9 +81,13 @@ with col2:
 
 st.divider()
 
-# System Database Status Indicator
+# System Database Status Indicator & Auto-Initialization for Streamlit Cloud
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DB_PATH = os.path.join(BASE_DIR, "db", "victims.db")
+
+if not os.path.exists(DB_PATH):
+    from data.generate_synthetic_data import main as init_db
+    init_db()
 
 st.markdown("### ⚙️ System Status")
 if os.path.exists(DB_PATH):
@@ -97,4 +101,4 @@ if os.path.exists(DB_PATH):
     except Exception as e:
         st.warning(f"Database error: {e}")
 else:
-    st.warning("⚠️ Database not found. Please run `python data/generate_synthetic_data.py` to seed the database.")
+    st.error("⚠️ Failed to initialize database.")
