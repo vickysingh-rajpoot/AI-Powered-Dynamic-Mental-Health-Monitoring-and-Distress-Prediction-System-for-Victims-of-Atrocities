@@ -1,0 +1,71 @@
+id,case_id,category,category_weight,channel,language,week_number,checkin_date,structured_score,free_text,responded,trajectory_type
+1,ATR-2026-0001,Rape/Gang-rape Victim,5,Chatbot,Hindi,1,2026-07-13,6,Feeling okay and manageable this week.,1,worsening
+2,ATR-2026-0001,Rape/Gang-rape Victim,5,Chatbot,Hindi,2,2026-07-20,8,Feeling okay and manageable this week.,1,worsening
+3,ATR-2026-0001,Rape/Gang-rape Victim,5,Chatbot,Hindi,3,2026-07-27,12,Trouble concentrating today due to stress about the case.,1,worsening
+4,ATR-2026-0001,Rape/Gang-rape Victim,5,Chatbot,Hindi,4,2026-08-03,15,Anxious about the court date and having trouble sleeping.,1,worsening
+5,ATR-2026-0001,Rape/Gang-rape Victim,5,Chatbot,Hindi,5,2026-08-10,17,"Neighbors becoming distant, struggling with money and expenses.",1,worsening
+6,ATR-2026-0001,Rape/Gang-rape Victim,5,Chatbot,Hindi,6,2026-08-17,19,"Neighbors becoming distant, struggling with money and expenses.",1,worsening
+7,ATR-2026-0001,Rape/Gang-rape Victim,5,Chatbot,Hindi,7,2026-08-24,21,Feeling socially isolated and constant financial worry.,1,worsening
+8,ATR-2026-0002,Threatened Witness,4,SMS,English,1,2026-07-13,8,Feeling okay and manageable this week.,1,sudden_threat
+9,ATR-2026-0002,Threatened Witness,4,SMS,English,2,2026-07-20,7,"Attended regular routine, everything felt baseline normal.",1,sudden_threat
+10,ATR-2026-0002,Threatened Witness,4,SMS,English,3,2026-07-27,8,"No major issues this week, feeling calm.",1,sudden_threat
+11,ATR-2026-0002,Threatened Witness,4,SMS,English,4,2026-08-03,10,A bit nervous about upcoming legal procedures.,1,sudden_threat
+12,ATR-2026-0002,Threatened Witness,4,SMS,English,5,2026-08-10,8,"Doing relatively well, resting at home today.",1,sudden_threat
+13,ATR-2026-0002,Threatened Witness,4,SMS,English,6,2026-08-17,22,"I am terrified, someone followed me home from the market yesterday.",1,sudden_threat
+14,ATR-2026-0002,Threatened Witness,4,SMS,English,7,2026-08-24,26,"I don't feel safe, they warned us to withdraw the case immediately.",1,sudden_threat
+15,ATR-2026-0003,Caste-based Violence - Family,4,IVRS,Marathi,1,2026-07-13,17,Struggling to manage household expenses and coping with ongoing trial stress.,1,improving
+16,ATR-2026-0003,Caste-based Violence - Family,4,IVRS,Marathi,2,2026-07-20,16,Struggling to manage household expenses and coping with ongoing trial stress.,1,improving
+17,ATR-2026-0003,Caste-based Violence - Family,4,IVRS,Marathi,3,2026-07-27,14,Anxious about the court date and having trouble sleeping.,1,improving
+18,ATR-2026-0003,Caste-based Violence - Family,4,IVRS,Marathi,4,2026-08-03,13,Trouble concentrating today due to stress about the case.,1,improving
+19,ATR-2026-0003,Caste-based Violence - Family,4,IVRS,Marathi,5,2026-08-10,12,Anxious about the court date and having trouble sleeping.,1,improving
+20,ATR-2026-0003,Caste-based Violence - Family,4,IVRS,Marathi,6,2026-08-17,10,Trouble concentrating today due to stress about the case.,1,improving
+21,ATR-2026-0003,Caste-based Violence - Family,4,IVRS,Marathi,7,2026-08-24,9,Feeling okay and manageable this week.,1,improving
+22,ATR-2026-0004,Murder/Grievous Hurt Victim Family,5,Chatbot,Hindi,1,2026-07-13,24,"Not feeling safe at all, feeling completely hopeless.",1,steady_high_risk
+23,ATR-2026-0004,Murder/Grievous Hurt Victim Family,5,Chatbot,Hindi,2,2026-07-20,22,"Extreme anxiety every night, feeling vulnerable and overwhelmed.",1,steady_high_risk
+24,ATR-2026-0004,Murder/Grievous Hurt Victim Family,5,Chatbot,Hindi,3,2026-07-27,24,"Severe trauma symptoms, feeling unsafe in my environment.",1,steady_high_risk
+25,ATR-2026-0004,Murder/Grievous Hurt Victim Family,5,Chatbot,Hindi,4,2026-08-03,22,"I've been getting strange calls at night, feeling hopeless and unsafe.",1,steady_high_risk
+26,ATR-2026-0004,Murder/Grievous Hurt Victim Family,5,Chatbot,Hindi,5,2026-08-10,24,"Not feeling safe at all, feeling completely hopeless.",1,steady_high_risk
+27,ATR-2026-0004,Murder/Grievous Hurt Victim Family,5,Chatbot,Hindi,6,2026-08-17,21,Feeling socially isolated and constant financial worry.,1,steady_high_risk
+28,ATR-2026-0004,Murder/Grievous Hurt Victim Family,5,Chatbot,Hindi,7,2026-08-24,20,"Neighbors becoming distant, struggling with money and expenses.",1,steady_high_risk
+29,ATR-2026-0005,Rape/Gang-rape Victim,5,Chatbot,Bengali,1,2026-07-13,11,A bit nervous about upcoming legal procedures.,1,disengaging
+30,ATR-2026-0005,Rape/Gang-rape Victim,5,Chatbot,Bengali,2,2026-07-20,14,Feeling mild stress regarding investigation updates.,1,disengaging
+31,ATR-2026-0005,Rape/Gang-rape Victim,5,Chatbot,Bengali,3,2026-07-27,17,Struggling to manage household expenses and coping with ongoing trial stress.,1,disengaging
+32,ATR-2026-0005,Rape/Gang-rape Victim,5,Chatbot,Bengali,4,2026-08-03,20,"Neighbors becoming distant, struggling with money and expenses.",1,disengaging
+33,ATR-2026-0005,Rape/Gang-rape Victim,5,Chatbot,Bengali,5,2026-08-10,22,"Extreme anxiety every night, feeling vulnerable and overwhelmed.",1,disengaging
+34,ATR-2026-0005,Rape/Gang-rape Victim,5,Chatbot,Bengali,6,2026-08-17,,,0,disengaging
+35,ATR-2026-0005,Rape/Gang-rape Victim,5,Chatbot,Bengali,7,2026-08-24,,,0,disengaging
+36,ATR-2026-0006,Caste-based Violence - Family,4,IVRS,Tamil,1,2026-07-13,13,Feeling mild stress regarding investigation updates.,1,fluctuating_stable
+37,ATR-2026-0006,Caste-based Violence - Family,4,IVRS,Tamil,2,2026-07-20,10,A bit nervous about upcoming legal procedures.,1,fluctuating_stable
+38,ATR-2026-0006,Caste-based Violence - Family,4,IVRS,Tamil,3,2026-07-27,10,Anxious about the court date and having trouble sleeping.,1,fluctuating_stable
+39,ATR-2026-0006,Caste-based Violence - Family,4,IVRS,Tamil,4,2026-08-03,12,Feeling mild stress regarding investigation updates.,1,fluctuating_stable
+40,ATR-2026-0006,Caste-based Violence - Family,4,IVRS,Tamil,5,2026-08-10,12,Anxious about the court date and having trouble sleeping.,1,fluctuating_stable
+41,ATR-2026-0006,Caste-based Violence - Family,4,IVRS,Tamil,6,2026-08-17,11,A bit nervous about upcoming legal procedures.,1,fluctuating_stable
+42,ATR-2026-0006,Caste-based Violence - Family,4,IVRS,Tamil,7,2026-08-24,13,Trouble concentrating today due to stress about the case.,1,fluctuating_stable
+43,ATR-2026-0007,Threatened Witness,4,SMS,Hindi,1,2026-07-13,8,"No major issues this week, feeling calm.",1,worsening
+44,ATR-2026-0007,Threatened Witness,4,SMS,Hindi,2,2026-07-20,10,Trouble concentrating today due to stress about the case.,1,worsening
+45,ATR-2026-0007,Threatened Witness,4,SMS,Hindi,3,2026-07-27,12,Trouble concentrating today due to stress about the case.,1,worsening
+46,ATR-2026-0007,Threatened Witness,4,SMS,Hindi,4,2026-08-03,16,Feeling socially isolated and constant financial worry.,1,worsening
+47,ATR-2026-0007,Threatened Witness,4,SMS,Hindi,5,2026-08-10,20,Struggling to manage household expenses and coping with ongoing trial stress.,1,worsening
+48,ATR-2026-0007,Threatened Witness,4,SMS,Hindi,6,2026-08-17,23,"Extreme anxiety every night, feeling vulnerable and overwhelmed.",1,worsening
+49,ATR-2026-0007,Threatened Witness,4,SMS,Hindi,7,2026-08-24,25,"Extreme anxiety every night, feeling vulnerable and overwhelmed.",1,worsening
+50,ATR-2026-0008,Arson Victim,3,Chatbot,Gujarati,1,2026-07-13,20,Struggling to manage household expenses and coping with ongoing trial stress.,1,improving
+51,ATR-2026-0008,Arson Victim,3,Chatbot,Gujarati,2,2026-07-20,17,Feeling socially isolated and constant financial worry.,1,improving
+52,ATR-2026-0008,Arson Victim,3,Chatbot,Gujarati,3,2026-07-27,15,Feeling mild stress regarding investigation updates.,1,improving
+53,ATR-2026-0008,Arson Victim,3,Chatbot,Gujarati,4,2026-08-03,12,Trouble concentrating today due to stress about the case.,1,improving
+54,ATR-2026-0008,Arson Victim,3,Chatbot,Gujarati,5,2026-08-10,9,Feeling okay and manageable this week.,1,improving
+55,ATR-2026-0008,Arson Victim,3,Chatbot,Gujarati,6,2026-08-17,7,Feeling okay and manageable this week.,1,improving
+56,ATR-2026-0008,Arson Victim,3,Chatbot,Gujarati,7,2026-08-24,4,Feeling okay and manageable this week.,1,improving
+57,ATR-2026-0009,Murder/Grievous Hurt Victim Family,5,IVRS,Telugu,1,2026-07-13,9,"No major issues this week, feeling calm.",1,disengaging
+58,ATR-2026-0009,Murder/Grievous Hurt Victim Family,5,IVRS,Telugu,2,2026-07-20,11,A bit nervous about upcoming legal procedures.,1,disengaging
+59,ATR-2026-0009,Murder/Grievous Hurt Victim Family,5,IVRS,Telugu,3,2026-07-27,14,Anxious about the court date and having trouble sleeping.,1,disengaging
+60,ATR-2026-0009,Murder/Grievous Hurt Victim Family,5,IVRS,Telugu,4,2026-08-03,16,"Neighbors becoming distant, struggling with money and expenses.",1,disengaging
+61,ATR-2026-0009,Murder/Grievous Hurt Victim Family,5,IVRS,Telugu,5,2026-08-10,19,Struggling to manage household expenses and coping with ongoing trial stress.,1,disengaging
+62,ATR-2026-0009,Murder/Grievous Hurt Victim Family,5,IVRS,Telugu,6,2026-08-17,,,0,disengaging
+63,ATR-2026-0009,Murder/Grievous Hurt Victim Family,5,IVRS,Telugu,7,2026-08-24,,,0,disengaging
+64,ATR-2026-0010,Caste-based Violence - Family,4,SMS,Kannada,1,2026-07-13,11,A bit nervous about upcoming legal procedures.,1,fluctuating_stable
+65,ATR-2026-0010,Caste-based Violence - Family,4,SMS,Kannada,2,2026-07-20,9,"Attended regular routine, everything felt baseline normal.",1,fluctuating_stable
+66,ATR-2026-0010,Caste-based Violence - Family,4,SMS,Kannada,3,2026-07-27,11,Anxious about the court date and having trouble sleeping.,1,fluctuating_stable
+67,ATR-2026-0010,Caste-based Violence - Family,4,SMS,Kannada,4,2026-08-03,12,A bit nervous about upcoming legal procedures.,1,fluctuating_stable
+68,ATR-2026-0010,Caste-based Violence - Family,4,SMS,Kannada,5,2026-08-10,10,Feeling mild stress regarding investigation updates.,1,fluctuating_stable
+69,ATR-2026-0010,Caste-based Violence - Family,4,SMS,Kannada,6,2026-08-17,12,Feeling mild stress regarding investigation updates.,1,fluctuating_stable
+70,ATR-2026-0010,Caste-based Violence - Family,4,SMS,Kannada,7,2026-08-24,9,"Doing relatively well, resting at home today.",1,fluctuating_stable
