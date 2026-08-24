@@ -16,6 +16,7 @@ PENDING_MESSAGE = (
     "consecutive check-in in the same direction before updating risk level. "
     "Currently held at the prior, confirmed risk level for safety."
 )
+COMPOSITE_RISK_JUMP_THRESHOLD = 15
 
 
 def count_consecutive_recent_matching_checkins(
@@ -129,7 +130,9 @@ def get_effective_risk(case_id: str) -> dict:
     prior = _risk_from_history(case_id, current_score_df.iloc[:-1])
 
     risk_order = {"Low": 0, "Moderate": 1, "High": 2}
-    if current_classification == prior["classification"]:
+    absolute_change = abs(current["composite_score"] - prior["composite_score"])
+    classification_changed = current_classification != prior["classification"]
+    if not classification_changed or absolute_change < COMPOSITE_RISK_JUMP_THRESHOLD:
         return {
             **current,
             "classification": current_classification,
